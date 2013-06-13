@@ -1,0 +1,9 @@
+{
+    "name": "app",
+    "main": "index.html",
+    "window": {
+        "toolbar": false,
+        "width": 400,
+        "height": 700
+    }
+}
