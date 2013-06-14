@@ -3,6 +3,9 @@ var argv3 = process.argv[3];
 var http = require("http");
 var url = require("url");
 
+var Encoder = require('node-html-encoder').Encoder;
+var encoder = new Encoder('entity');
+
 var word_api;
 
 var fs = require("fs");
@@ -74,7 +77,7 @@ function render_template(word) {
     console.log('------------------------------------------------------------');
     console.log('音标：');
     word.ps.forEach(function (element_ps) {
-        console.log(element_ps);
+        console.log('[' + encoder.htmlDecode(element_ps) + ']');
     });
     console.log('------------------------------------------------------------');
     console.log('解释：');
