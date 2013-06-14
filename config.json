@@ -1,3 +1,6 @@
 {
-    "api": "qqdict"
+    "api": "qqdict",
+    "show_ps_flag": false,
+    "show_pos_flag": true,
+    "show_sent_flag": false 
 }

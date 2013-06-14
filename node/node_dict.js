@@ -7,15 +7,23 @@ var Encoder = require('node-html-encoder').Encoder;
 var encoder = new Encoder('entity');
 
 var word_api;
+var show_ps_flag = true;
+var show_pos_flag = true;
+var show_sent_flag = true;
 
 var fs = require("fs");
 fs.readFile('../config.json', function(err, data) {
-    if(err) {
-        console.log(err);
-        word_api = get_api('iciba');
-    } else {
+    if(!err) {
         data_json = JSON.parse(data);
         word_api = get_api(data_json.api);
+
+        show_ps_flag = data_json.show_ps_flag;
+        show_pos_flag = data_json.show_pos_flag;
+        show_sent_flag = data_json.show_sent_flag;
+
+    } else {
+        console.log(err);
+        word_api = get_api('iciba');
     }
 
     var url_parse = url.parse(word_api.api);
@@ -74,22 +82,28 @@ function get_api(api_name) {
 }
 
 function render_template(word) {
-    console.log('------------------------------------------------------------');
-    console.log('音标：');
-    word.ps.forEach(function (element_ps) {
-        console.log('[' + encoder.htmlDecode(element_ps) + ']');
-    });
-    console.log('------------------------------------------------------------');
-    console.log('解释：');
-    word.pos.forEach(function (element_pos) {
-        console.log(element_pos.pos + ' ' + element_pos.acceptation);
-    });
-    console.log('------------------------------------------------------------');
-    console.log('例句：');
-    word.sent.forEach(function (element_sent) {
-        console.log(element_sent.orig);
-        console.log(element_sent.trans);
-    });
+    if(show_ps_flag) {
+        console.log('------------------------------------------------------------');
+        console.log('音标：');
+        word.ps.forEach(function (element_ps) {
+            console.log('[' + encoder.htmlDecode(element_ps) + ']');
+        });
+    }
+    if(show_pos_flag) {
+        console.log('------------------------------------------------------------');
+        console.log('解释：');
+        word.pos.forEach(function (element_pos) {
+            console.log(element_pos.pos + ' ' + element_pos.acceptation);
+        });
+    }
+    if(show_sent_flag) {
+        console.log('------------------------------------------------------------');
+        console.log('例句：');
+        word.sent.forEach(function (element_sent) {
+            console.log(element_sent.orig);
+            console.log(element_sent.trans);
+        });
+    }
 }
 
 function iciba_callback(data) {
