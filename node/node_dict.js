@@ -1,5 +1,10 @@
-var key = process.argv[2];
-var argv3 = process.argv[3];
+//var key = process.argv[2];
+//var argv3 = process.argv[3];
+var readline = require('readline');
+var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 var http = require("http");
 var url = require("url");
 
@@ -30,12 +35,27 @@ fs.readFile('../config.json', function(err, data) {
     word_api.host = url_parse.host;
     word_api.path = url_parse.path;
 
-    search_word();
+    input_word();
 });
 
-function search_word() {
+function input_word() {
+    rl.question("word:", function(key) {
+        if(key) {
+            search_word(key, function() {
+                input_word();
+            });
+        } else {
+            rl.close();
+        }
+    });
+}
+
+function search_word(key, callback) {
     if(key) {
-        search_word_net(key);
+        search_word_net(key, function(word) {
+            render_template(word);
+            callback();
+        });
     } else {
         console.log('输入要查的单词');
     }
@@ -57,7 +77,7 @@ function search_word_net(key, callback) {
 
         res.on('end',function(){
             word = qqdict_callback(data);
-            render_template(word);
+            callback(word);
         });
 
     }).on('error', function(e) {
@@ -82,6 +102,13 @@ function get_api(api_name) {
 }
 
 function render_template(word) {
+    if(!word) {
+        console.log('------------------------------------------------------------');
+        console.log('没有查到');
+        console.log('------------------------------------------------------------');
+        return false;
+    }
+
     if(show_ps_flag) {
         console.log('------------------------------------------------------------');
         console.log('音标：');
@@ -104,6 +131,7 @@ function render_template(word) {
             console.log(element_sent.trans);
         });
     }
+    console.log('------------------------------------------------------------');
 }
 
 function iciba_callback(data) {
@@ -144,6 +172,11 @@ function iciba_callback(data) {
 function qqdict_callback(data) {
 
     data = JSON.parse(data);
+
+    if(!data.local) {
+        return null;
+    }
+
     data = data.local[0];
 
     var explain = {};
@@ -151,25 +184,29 @@ function qqdict_callback(data) {
     explain.ps = data.pho;
 
     var pos = [];
-    data.des.forEach(function(ele, i) {
-        var pos_item = {};
-        pos_item.pos = ele.p;
-        pos_item.acceptation = ele.d; 
-        pos[i] = pos_item;
-    });
+    if(data.des) {
+        data.des.forEach(function(ele, i) {
+            var pos_item = {};
+            pos_item.pos = ele.p;
+            pos_item.acceptation = ele.d; 
+            pos[i] = pos_item;
+        });
+    }
     explain.pos = pos;
 
     var sent = [];
     var i = 0;
-    data.sen.forEach(function(element_sent_group) {
-        element_sent_group.s.forEach(function(element_sent) {
-            var sent_item = {};
-            sent_item.orig = element_sent.es + '(' + element_sent_group.p + ')'; 
-            sent_item.trans = element_sent.cs; 
-            sent[i] = sent_item;
-            i++;
+    if(data.sen) {
+        data.sen.forEach(function(element_sent_group) {
+            element_sent_group.s.forEach(function(element_sent) {
+                var sent_item = {};
+                sent_item.orig = element_sent.es + '(' + element_sent_group.p + ')'; 
+                sent_item.trans = element_sent.cs; 
+                sent[i] = sent_item;
+                i++;
+            });
         });
-    });
+    }
     explain.sent = sent;
 
     return explain;
