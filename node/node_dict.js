@@ -5,11 +5,15 @@ var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+
 var http = require("http");
 var url = require("url");
 
 var Encoder = require('node-html-encoder').Encoder;
 var encoder = new Encoder('entity');
+
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('../iciba.db');
 
 var word_api;
 var show_ps_flag = true;
@@ -52,13 +56,50 @@ function input_word() {
 
 function search_word(key, callback) {
     if(key) {
-        search_word_net(key, function(word) {
-            render_template(word);
-            callback();
+        search_word_local(key, function(word) {
+            if(word) {
+                render_template(word);
+                callback();
+            } else {
+                search_word_net(key, function(explain) {
+                    var word = {};
+                    word.word = key;
+                    word.explain = explain;
+                    word.times = 1;
+                    //写入本地数据库
+                    var stmt = db.prepare("REPLACE INTO word_list VALUES (?,?,?)");
+                    stmt.run(word.word, JSON.stringify(explain), word.times);
+                    stmt.finalize();
+                    render_template(word);
+                    callback();
+                });
+            }
         });
     } else {
         console.log('输入要查的单词');
     }
+}
+
+function search_word_local(key, callback) {
+    db.serialize(function() {
+        db.get("SELECT word,explain,times FROM word_list WHERE word = '"+ key + "'", function(err, row) {
+            if(row) {
+                if(row.explain) {
+                    db.run("UPDATE word_list SET times = times + 1 WHERE word = ?", key);
+                    var word = {};
+                    word.word = key;
+                    word.explain = JSON.parse(row.explain);
+                    word.times = row.times;
+                    word.origin = "本地缓存";
+                    callback(word);
+                } else {
+                    callback(null);
+                }
+            } else {
+                callback(null);
+            }
+        });
+    });
 }
 
 function search_word_net(key, callback) {
@@ -68,7 +109,6 @@ function search_word_net(key, callback) {
     };
 
     http.get(options, function(res) {
-        //console.log(res.statusCode);
         var data = '';
 
         res.on('data', function (chunk){
@@ -76,8 +116,8 @@ function search_word_net(key, callback) {
         });
 
         res.on('end',function(){
-            word = qqdict_callback(data);
-            callback(word);
+            var explain = qqdict_callback(data);
+            callback(explain);
         });
 
     }).on('error', function(e) {
@@ -112,21 +152,21 @@ function render_template(word) {
     if(show_ps_flag) {
         console.log('------------------------------------------------------------');
         console.log('音标：');
-        word.ps.forEach(function (element_ps) {
+        word.explain.ps.forEach(function (element_ps) {
             console.log('[' + encoder.htmlDecode(element_ps) + ']');
         });
     }
     if(show_pos_flag) {
         console.log('------------------------------------------------------------');
         console.log('解释：');
-        word.pos.forEach(function (element_pos) {
+        word.explain.pos.forEach(function (element_pos) {
             console.log(element_pos.pos + ' ' + element_pos.acceptation);
         });
     }
     if(show_sent_flag) {
         console.log('------------------------------------------------------------');
         console.log('例句：');
-        word.sent.forEach(function (element_sent) {
+        word.explain.sent.forEach(function (element_sent) {
             console.log(element_sent.orig);
             console.log(element_sent.trans);
         });
