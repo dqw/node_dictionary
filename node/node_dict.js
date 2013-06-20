@@ -76,6 +76,9 @@ function render_template(word) {
         return false;
     }
 
+    console.log('------------------------------------------------------------');
+    console.log('查询次数：' + word.times);
+
     if(show_ps_flag) {
         console.log('------------------------------------------------------------');
         console.log('音标：');
@@ -116,6 +119,7 @@ function search_word(key, callback) {
                 search_word_net(key, function(word) {
                     if(word_local) {
                         update_word_local(word);
+                        word.times = word_local.times;
                     } else {
                         add_word_local(word);
                     }
