@@ -52,82 +52,6 @@ function input_word() {
     });
 }
 
-function search_word(key, callback) {
-    if(key) {
-        search_word_local(key, function(word) {
-            if(word) {
-                render_template(word);
-                callback();
-            } else {
-                search_word_net(key, function(explain) {
-                    var word = {};
-                    word.word = key;
-                    word.explain = explain;
-                    word.times = 1;
-                    save_word_local(word);
-                    render_template(word);
-                    callback();
-                });
-            }
-        });
-    } else {
-        console.log('输入要查的单词');
-    }
-}
-
-function save_word_local(word) {
-    //写入本地数据库
-    var stmt = db.prepare("REPLACE INTO word_list VALUES (?,?,?)");
-    stmt.run(word.word, JSON.stringify(word.explain), word.times);
-    stmt.finalize();
-
-}
-
-function search_word_local(key, callback) {
-    db.serialize(function() {
-        db.get("SELECT word,explain,times FROM word_list WHERE word = '"+ key + "'", function(err, row) {
-            if(row) {
-                if(row.explain) {
-                    db.run("UPDATE word_list SET times = times + 1 WHERE word = ?", key);
-                    var word = {};
-                    word.word = key;
-                    word.explain = JSON.parse(row.explain);
-                    word.times = row.times;
-                    word.origin = "本地缓存";
-                    callback(word);
-                } else {
-                    callback(null);
-                }
-            } else {
-                callback(null);
-            }
-        });
-    });
-}
-
-function search_word_net(key, callback) {
-    var options = {
-        host: word_api.host,
-        path: word_api.path + key
-    };
-
-    http.get(options, function(res) {
-        var data = '';
-
-        res.on('data', function (chunk){
-            data += chunk;
-        });
-
-        res.on('end',function(){
-            var explain = qqdict_callback(data);
-            callback(explain);
-        });
-
-    }).on('error', function(e) {
-        console.log("Got error: " + e.message);
-    });
-}
-
 function get_api(api_name) {
     var iciba = {};
     iciba.api = 'http://dict-co.iciba.com/api/dictionary.php?w=';
@@ -175,6 +99,96 @@ function render_template(word) {
         });
     }
     console.log('------------------------------------------------------------');
+}
+
+
+function search_word(key, callback) {
+    if(key) {
+        var first_letter = key.substring(0,1);
+        if(first_letter === '*') {
+            key = key.substring(1);
+        }
+        search_word_local(key, function(word_local) {
+            if(word_local && first_letter !== '*') {
+                render_template(word_local);
+                callback();
+            } else {
+                search_word_net(key, function(word) {
+                    if(word_local) {
+                        update_word_local(word);
+                    } else {
+                        add_word_local(word);
+                    }
+                    render_template(word);
+                    callback();
+                });
+            }
+        });
+    } else {
+        console.log('输入要查的单词');
+    }
+}
+
+function add_word_local(word) {
+    //写入本地数据库
+    var stmt = db.prepare("REPLACE INTO word_list VALUES (?,?,?)");
+    stmt.run(word.word, JSON.stringify(word.explain), word.times);
+    stmt.finalize();
+}
+
+function update_word_local(word) {
+    var stmt = db.prepare("UPDATE word_list SET explain=?,times = times + 1 WHERE word = ?");
+    stmt.run(word.explain, word.word);
+    stmt.finalize();
+}
+
+function search_word_local(key, callback) {
+    db.serialize(function() {
+        db.get("SELECT word,explain,times FROM word_list WHERE word = '"+ key + "'", function(err, row) {
+            if(row) {
+                if(row.explain) {
+                    db.run("UPDATE word_list SET times = times + 1 WHERE word = ?", key);
+                    var word = {};
+                    word.word = key;
+                    word.explain = JSON.parse(row.explain);
+                    word.times = row.times;
+                    word.origin = "本地缓存";
+                    callback(word);
+                } else {
+                    callback(null);
+                }
+            } else {
+                callback(null);
+            }
+        });
+    });
+}
+
+function search_word_net(key, callback) {
+    var options = {
+        host: word_api.host,
+        path: word_api.path + key
+    };
+
+    http.get(options, function(res) {
+        var data = '';
+
+        res.on('data', function (chunk){
+            data += chunk;
+        });
+
+        res.on('end',function(){
+            var explain = qqdict_callback(data);
+            var word = {};
+            word.word = key;
+            word.explain = explain;
+            word.times = 1;
+            callback(word);
+        });
+
+    }).on('error', function(e) {
+        console.log("Got error: " + e.message);
+    });
 }
 
 function iciba_callback(data) {
@@ -255,3 +269,4 @@ function qqdict_callback(data) {
     return explain;
 
 }
+
