@@ -64,10 +64,7 @@ function search_word(key, callback) {
                     word.word = key;
                     word.explain = explain;
                     word.times = 1;
-                    //写入本地数据库
-                    var stmt = db.prepare("REPLACE INTO word_list VALUES (?,?,?)");
-                    stmt.run(word.word, JSON.stringify(explain), word.times);
-                    stmt.finalize();
+                    save_word_local(word);
                     render_template(word);
                     callback();
                 });
@@ -76,6 +73,14 @@ function search_word(key, callback) {
     } else {
         console.log('输入要查的单词');
     }
+}
+
+function save_word_local(word) {
+    //写入本地数据库
+    var stmt = db.prepare("REPLACE INTO word_list VALUES (?,?,?)");
+    stmt.run(word.word, JSON.stringify(word.explain), word.times);
+    stmt.finalize();
+
 }
 
 function search_word_local(key, callback) {
