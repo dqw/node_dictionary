@@ -1,5 +1,3 @@
-//var key = process.argv[2];
-//var argv3 = process.argv[3];
 var readline = require('readline');
 var rl = readline.createInterface({
     input: process.stdin,
@@ -13,7 +11,7 @@ var Encoder = require('node-html-encoder').Encoder;
 var encoder = new Encoder('entity');
 
 var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('../iciba.db');
+var db = new sqlite3.Database('../lib/iciba.db');
 
 var word_api;
 var show_ps_flag = true;
@@ -21,7 +19,7 @@ var show_pos_flag = true;
 var show_sent_flag = true;
 
 var fs = require("fs");
-fs.readFile('../config.json', function(err, data) {
+fs.readFile('../lib/config.json', function(err, data) {
     if(!err) {
         data_json = JSON.parse(data);
         word_api = get_api(data_json.api);
