@@ -248,7 +248,7 @@ function qqdict_callback(data) {
     if(data.des) {
         data.des.forEach(function(ele, i) {
             var pos_item = {};
-            pos_item.pos = ele.p;
+            pos_item.pos = ele.p?ele.p:'';
             pos_item.acceptation = ele.d; 
             pos[i] = pos_item;
         });
