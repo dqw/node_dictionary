@@ -69,39 +69,39 @@ function get_api(api_name) {
 }
 
 function render_template(word) {
-    if(!word) {
-        console.log('------------------------------------------------------------');
+    if(!word.explain) {
+        console.log('--------------------');
         console.log('没有查到');
-        console.log('------------------------------------------------------------');
+        console.log('--------------------');
         return false;
     }
 
-    console.log('------------------------------------------------------------');
+    console.log('--------------------');
     console.log('查询次数：' + word.times);
 
     if(show_ps_flag) {
-        console.log('------------------------------------------------------------');
+        console.log('--------------------');
         console.log('音标：');
         word.explain.ps.forEach(function (element_ps) {
             console.log('[' + encoder.htmlDecode(element_ps) + ']');
         });
     }
     if(show_pos_flag) {
-        console.log('------------------------------------------------------------');
+        console.log('--------------------');
         console.log('解释：');
         word.explain.pos.forEach(function (element_pos) {
             console.log(element_pos.pos + ' ' + element_pos.acceptation);
         });
     }
     if(show_sent_flag) {
-        console.log('------------------------------------------------------------');
+        console.log('--------------------');
         console.log('例句：');
         word.explain.sent.forEach(function (element_sent) {
             console.log(element_sent.orig);
             console.log(element_sent.trans);
         });
     }
-    console.log('------------------------------------------------------------');
+    console.log('********************');
 }
 
 
