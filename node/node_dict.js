@@ -4,8 +4,6 @@ var rl = readline.createInterface({
     output: process.stdout
 });
 
-var url = require("url");
-
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('../lib/iciba.db');
 
@@ -14,32 +12,10 @@ var encoder = new Encoder('entity');
 
 var w = require('../lib/word.js');
 
-var word_api;
-var show_ps_flag = true;
-var show_pos_flag = true;
-var show_sent_flag = true;
+var c = require('../lib/word_config.js');
+var word_config = c.getWordConfig('../lib/config.json');
 
-var fs = require("fs");
-fs.readFile('../lib/config.json', function(err, data) {
-    if(!err) {
-        data_json = JSON.parse(data);
-        word_api = get_api(data_json.api);
-
-        show_ps_flag = data_json.show_ps_flag;
-        show_pos_flag = data_json.show_pos_flag;
-        show_sent_flag = data_json.show_sent_flag;
-
-    } else {
-        console.log(err);
-        word_api = get_api('iciba');
-    }
-
-    var url_parse = url.parse(word_api.api);
-    word_api.host = url_parse.host;
-    word_api.path = url_parse.path;
-
-    input_word();
-});
+input_word();
 
 function input_word() {
     rl.question("word:", function(key) {
@@ -53,20 +29,6 @@ function input_word() {
     });
 }
 
-function get_api(api_name) {
-    var iciba = {};
-    iciba.api = 'http://dict-co.iciba.com/api/dictionary.php?w=';
-
-    var qqdict = {}; 
-    qqdict.api = 'http://dict.qq.com/dict?q=';
-
-    if(api_name === 'qqdict') {
-        return qqdict;
-    } else {
-        return iciba;
-    }
-}
-
 function render_template(word) {
     if(!word.explain) {
         console.log('--------------------');
@@ -78,21 +40,21 @@ function render_template(word) {
     console.log('--------------------');
     console.log('查询次数：' + word.times);
 
-    if(show_ps_flag) {
+    if(word_config.show_ps_flag) {
         console.log('--------------------');
         console.log('音标：');
         word.explain.ps.forEach(function (element_ps) {
             console.log('[' + encoder.htmlDecode(element_ps) + ']');
         });
     }
-    if(show_pos_flag) {
+    if(word_config.show_pos_flag) {
         console.log('--------------------');
         console.log('解释：');
         word.explain.pos.forEach(function (element_pos) {
             console.log(element_pos.pos + ' ' + element_pos.acceptation);
         });
     }
-    if(show_sent_flag) {
+    if(word_config.show_sent_flag) {
         console.log('--------------------');
         console.log('例句：');
         word.explain.sent.forEach(function (element_sent) {
@@ -115,7 +77,7 @@ function search_word(key, callback) {
                 render_template(word_local);
                 callback();
             } else {
-                w.search_word_net(word_api, key, function(word) {
+                w.search_word_net(word_config, key, function(word) {
                     if(word_local) {
                         w.update_word_local(word, db);
                         word.times = word_local.times;
