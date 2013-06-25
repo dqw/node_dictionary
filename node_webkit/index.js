@@ -48,11 +48,13 @@ $(document).ready(function() {
         clear_result();
         var key = $(this).attr("data-word");
         w.search_word_net(word_config, key, function(word){
-            w.update_word_local(word, db);
-
-            word.update_flag = 'update';
-
-            show_result(word);
+            if(word) {
+                w.update_word_local(word, db);
+                word.update_flag = 'update';
+                show_result(word);
+            } else {
+                show_message("单词更新失败", "fail");
+            }
         });
     });
 
@@ -79,13 +81,13 @@ $(document).ready(function() {
         var ps_html = '';
         var pos_html = '';
         var sent_html = '';
-        if(word_config.show_ps_flag) {
+        if(word_config.show_ps_flag && word.explain.ps) {
             ps_html = template.render('ps', { list: word.explain.ps });
         }
-        if(word_config.show_pos_flag) {
+        if(word_config.show_pos_flag && word.explain.pos) {
             pos_html = template.render('pos', { list: word.explain.pos });
         }
-        if(word_config.show_sent_flag) {
+        if(word_config.show_sent_flag && word.explain.sent) {
             sent_html = template.render('sent', { list: word.explain.sent });
         }
         return result_html + ps_html + pos_html + sent_html;
