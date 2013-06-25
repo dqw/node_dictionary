@@ -7,39 +7,11 @@ $(document).ready(function() {
 
     var w = require('../../lib/word.js');
 
-    function get_api (api_name) {
-        var iciba = {};
-        iciba.api = 'http://dict-co.iciba.com/api/dictionary.php?w=';
-
-        var qqdict = {}; 
-        qqdict.api = 'http://dict.qq.com/dict?q=';
-
-        if(api_name === 'qqdict') {
-            return qqdict;
-        } else {
-            return iciba;
-        }
-    }
-    var word_api;
-
+    var c = require('../../lib/word_config.js');
+    var word_config = c.getWordConfig('../../lib/config.json');
 
     win.on('focus', function() {
         $("#key").select();
-    });
-
-    var fs = require("fs");
-    fs.readFile('../../lib/config.json', function(err, data) {
-        if(err) {
-            console.log(err);
-            word_api = get_api('iciba');
-        } else {
-            data_json = JSON.parse(data);
-            word_api = get_api(data_json.api);
-
-            var url_parse = url.parse(word_api.api);
-            word_api.host = url_parse.host;
-            word_api.path = url_parse.path;
-        }
     });
 
     var sqlite3 = require('sqlite3').verbose();
@@ -56,7 +28,7 @@ $(document).ready(function() {
                 if(word) {
                     show_result(word);
                 } else {
-                    w.search_word_net(word_api, key, function(word){
+                    w.search_word_net(word_config, key, function(word){
                         if(word) {
                             w.add_word_local(word, db);
                             show_result(word);
@@ -75,7 +47,7 @@ $(document).ready(function() {
         show_message("更新中", "success");
         clear_result();
         var key = $(this).attr("data-word");
-        w.search_word_net(word_api, key, function(word){
+        w.search_word_net(word_config, key, function(word){
             w.update_word_local(word, db);
 
             word.update_flag = 'update';
@@ -104,9 +76,18 @@ $(document).ready(function() {
 
     function render_template(word) {
         var result_html = template.render('result', { word: word});
-        var ps_html = template.render('ps', { list: word.explain.ps });
-        var pos_html = template.render('pos', { list: word.explain.pos });
-        var sent_html = template.render('sent', { list: word.explain.sent });
+        var ps_html = '';
+        var pos_html = '';
+        var sent_html = '';
+        if(word_config.show_ps_flag) {
+            ps_html = template.render('ps', { list: word.explain.ps });
+        }
+        if(word_config.show_pos_flag) {
+            pos_html = template.render('pos', { list: word.explain.pos });
+        }
+        if(word_config.show_sent_flag) {
+            sent_html = template.render('sent', { list: word.explain.sent });
+        }
         return result_html + ps_html + pos_html + sent_html;
     }
 
