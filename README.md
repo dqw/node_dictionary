@@ -4,7 +4,7 @@
 
 ### node版本使用说明
 
-- 安装node [http://nodejs.org/](nodejs)
+- 安装node [nodejs](http://nodejs.org/)
 - 运行node node_dict.js
 - 输入要查询的单词进行查询
 - 不输入单词直接回车为退出
@@ -12,6 +12,6 @@
 
 ### node-webkit版本使用说明
 
-- 安装node-webkit [https://github.com/rogerwang/node-webkit](node-webkit)
+- 安装node-webkit [node-webkit](https://github.com/rogerwang/node-webkit)
 - 运行nw node_webkit/i386
  
