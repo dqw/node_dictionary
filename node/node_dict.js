@@ -30,7 +30,7 @@ function input_word() {
 }
 
 function render_template(word) {
-    if(!word.explain) {
+    if(!word || !word.explain) {
         console.log('--------------------');
         console.log('没有查到');
         console.log('--------------------');
@@ -82,7 +82,9 @@ function search_word(key, callback) {
                         w.update_word_local(word, db);
                         word.times = word_local.times;
                     } else {
-                        w.add_word_local(word, db);
+                        if(word) {
+                            w.add_word_local(word, db);
+                        }
                     }
                     render_template(word);
                     callback();
