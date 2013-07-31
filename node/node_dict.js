@@ -40,7 +40,7 @@ function render_template(word) {
     console.log('--------------------');
     console.log('查询次数：' + word.times);
 
-    if(word_config.show_ps_flag) {
+    if(word_config.show_ps_flag && word.explain.ps) {
         console.log('--------------------');
         console.log('音标：');
         word.explain.ps.forEach(function (element_ps) {
